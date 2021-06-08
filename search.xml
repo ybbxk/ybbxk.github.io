@@ -1,0 +1,631 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>about</title>
+    <url>/2015/09/15/about/</url>
+    <content><![CDATA[<p>试着用一次<br>提交测试</p>
+]]></content>
+  </entry>
+  <entry>
+    <title>auto</title>
+    <url>/2015/09/15/auto/</url>
+    <content><![CDATA[<p>测试部署</p>
+]]></content>
+  </entry>
+  <entry>
+    <title>Centos时区设置</title>
+    <url>/2015/10/26/centos-timezone/</url>
+    <content><![CDATA[<p>新装了centos系统，发现时区设置不对，网上搜索后发现centos的时区设置稍微有点特殊，做个记录。  </p>
+<p>在/etc目录下执行 <code>ll localtime</code> 结果发现 <code>localtime -&gt; ../usr/share/zoneinfo/America/New_York</code> ，”本地时间”实际上是纽约时间。centos系统的时区文件在/usr/share/zoneinfo/目录下，很容已能找到 <code>Asia/Shanghai</code> 文件，删除原来的 <code>/etc/localtime</code> ，然后执行如下命令</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime</span><br></pre></td></tr></table></figure>
+<p>现在的系统时间就是“北京时间”了。</p>
+]]></content>
+      <tags>
+        <tag>centos</tag>
+        <tag>timezone</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>nginx编译bug</title>
+    <url>/2017/08/04/complie-nginx-bug/</url>
+    <content><![CDATA[<p>自定义编译nginx时，出现了如下报错</p>
+<figure class="highlight vbnet"><table><tr><td class="code"><pre><span class="line">relocation R_X86_64_32 against `.rodata<span class="comment">&#x27; can not be used when making a shared object; recompile with -fPIC</span></span><br><span class="line">/path/<span class="keyword">to</span>/openssl/.openssl/<span class="keyword">lib</span>/libssl.a: <span class="keyword">error</span> adding symbols: Bad value</span><br><span class="line"><span class="symbol">collect2:</span> <span class="keyword">error</span>: ld returned <span class="number">1</span> <span class="keyword">exit</span> status</span><br></pre></td></tr></table></figure>
+<p>打算直接修改Makefile文件时，找到了<a href="https://askubuntu.com/questions/804416/building-nginx-deb-package-with-custom-openssl/804417#804417">askubuntu</a>，新的解决方法，尝试之后，编译通过，在这里记录解决方法。<br>在nginx目录下的 auto/options 文件中找到这么一行</p>
+<figure class="highlight routeros"><table><tr><td class="code"><pre><span class="line"><span class="attribute">--with-openssl-opt</span>=*)            <span class="attribute">OPENSSL_OPT</span>=<span class="string">&quot;<span class="variable">$value</span>&quot;</span>       ;; </span><br></pre></td></tr></table></figure>
+<p>修改为如下样式</p>
+<figure class="highlight routeros"><table><tr><td class="code"><pre><span class="line"><span class="attribute">--with-openssl-opt</span>=*)            <span class="attribute">OPENSSL_OPT</span>=<span class="string">&quot;<span class="variable">$value</span> -fPIC&quot;</span>       ;; </span><br></pre></td></tr></table></figure>
+<p>可能因为版本不同，我找到的跟链接例子中的不大一样，但是可以解决编译错误。</p>
+]]></content>
+      <tags>
+        <tag>nginx</tag>
+        <tag>openssl</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>date</title>
+    <url>/2015/09/17/date/</url>
+    <content><![CDATA[<p>&copy;<br>4&lt;5<br>at&amp;t</p>
+]]></content>
+  </entry>
+  <entry>
+    <title>docker部署hexo</title>
+    <url>/2017/07/21/docker-hexo/</url>
+    <content><![CDATA[<p>很早想在docker上部署hexo，但是一直没(tai)时(lan)间(le)。终于抽空部署上来，问题多多，记录一下。</p>
+<p>1.手动拉取 nodejs 镜像 <code>docker pull node:latest</code>，个人喜好，后面创建镜像的时候可以节省时间。顺便提一下，使用<a href="https://www.daocloud.io/">daocloud</a>，拉取速度提升了1到2个数量级。</p>
+<p>2.安装hexo，<code>npm install -g hexo-cli</code>，这一句就直接给我搞了个没有权限的报错。貌似是npm的一个bug，google到了解决方法如下。</p>
+<figure class="highlight routeros"><table><tr><td class="code"><pre><span class="line">npm<span class="built_in"> config </span><span class="builtin-name">set</span><span class="built_in"> user </span>0</span><br><span class="line">npm<span class="built_in"> config </span><span class="builtin-name">set</span> unsafe-perm <span class="literal">true</span></span><br><span class="line">npm install hexo-cli -g</span><br></pre></td></tr></table></figure>
+<p>3.因为已经有现成的hexo工程，并没有把工程安装写在Dockerfile中，而是进入container完成工程的重新部署。Dockerfile只是安装环境和部分软件。就不传了。  </p>
+<p>4.全自动部署，当然是需要docker-compose了。但是使用compose运行时，提示<code>nodejs exited with code 0</code>，而直接用Dockerfile却可以正常运行，参考这个<a href="https://stackoverflow.com/questions/37100358/docker-composer-exited-with-code-0">stackoverflow</a>得到了解决方法。在docker-compose.yml文件增加一行<code>tty: true</code>，可以实现后台运行。  </p>
+<p>5.由于桌面端没装nodejs(本来就是不想装，才用的docker)，无法运行hexo命令。在虚拟机里运行的话，每次要敲一大堆的命令。但是桌面上装上的话，又背离了使用docker的初衷。所以，还是用脚本来解决吧。在/usr/bin 下面增加一个文件，内容如下。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line">all=<span class="variable">$@</span></span><br><span class="line">docker <span class="built_in">exec</span> -i hexo bash -c <span class="string">&quot;cd /path/to/hexo;hexo <span class="variable">$all</span>&quot;</span></span><br></pre></td></tr></table></figure>
+<p>hexo使用的container 名字是 <code>hexo</code>, 通过一个<code>all</code>来传递所有参数，是因为直接在 -c后面用 <code>$@</code>时，多参数只能收到第一个参数，采用了个变通的方法。使用时，直接在桌面运行 <code>hexo param</code>就可以了。<br>大功告成，用此docker完成本文。</p>
+]]></content>
+      <tags>
+        <tag>docker</tag>
+        <tag>hexo</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>docke使用记录</title>
+    <url>/2017/11/01/docker/</url>
+    <content><![CDATA[<p>1.使用root用户登陆container，解决方法来自<a href="https://stackoverflow.com/a/35485346">stackoverflow</a>。<code>docker exec -u 0 -it mycontainer bash</code></p>
+]]></content>
+      <categories>
+        <category>docker</category>
+      </categories>
+      <tags>
+        <tag>docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>git_ignore_modified_files</title>
+    <url>/2015/12/14/git-ignore-modified-files/</url>
+    <content><![CDATA[<p>当文件已经更新，想要忽略本地的改动时，就不能使用.gitignore了，可以使用<br><code>git update-index --assume-unchanged /path/to/file</code><br>想要继续跟踪这些文件时，执行<br><code>git update-index --no-assume-unchanged /path/to/file</code>  </p>
+]]></content>
+      <tags>
+        <tag>git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>git服务器使用自签证书出现SSL certificate problem: Unable to get local issuer certificate错误</title>
+    <url>/2017/02/23/git-ssl-issuer/</url>
+    <content><![CDATA[<p>搭建了本地<a href="https://gogs.io/">gogs</a>，看看使用情况，gogs自签证书只需要一个指令，就顺便加上了https，结果</p>
+<figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line">git config --global http.sslVerify <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+]]></content>
+  </entry>
+  <entry>
+    <title>gitlab升级后http方式502错误</title>
+    <url>/2016/05/13/gitlab%E5%8D%87%E7%BA%A7%E5%90%8Ehttp%E6%96%B9%E5%BC%8F502%E9%94%99%E8%AF%AF/</url>
+    <content><![CDATA[<p>gitlab从8.1升级到8.7.4，ssh方式已经可以提交获取代码了，但是通过http方式还是502。</p>
+<p>查询nginx后台日志显示 <code>connect() to unix://var/opt/gitlab/gitlab-git-http-server/socket failed (13: Permission denied)</code> 把nginx用户加到文件所在的组后，再次尝试依然是502，但是错误日志内容有了变化 <code>connect() to unix://var/opt/gitlab/gitlab-git-http-server/socket failed (111: Connection refused)</code> 连接拒绝了。google搜结果，在<a href="https://gitlab.com/gitlab-org/omnibus-gitlab/issues/982">这里</a>找到了答案。修改nginx配置，把 <code>/var/opt/gitlab/gitlab-git-http-server/socket</code> 替换为 <code>/var/opt/gitlab/gitlab-workhorse/socket</code> 就可以了。</p>
+]]></content>
+      <tags>
+        <tag>gitlab</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>grep正则表达式</title>
+    <url>/2015/10/29/grep%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/</url>
+    <content><![CDATA[<p>写个脚本，需要用到grep的零宽断言。拿<code>grep -E</code>尝试了半天都没效果。换用<code>grep -P</code>后，问题解决。以后还是统一用<code>grep -P</code>进行正则匹配吧。</p>
+]]></content>
+      <tags>
+        <tag>grep</tag>
+        <tag>linux</tag>
+        <tag>regular</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>hexo使用注意事项</title>
+    <url>/2015/10/10/hexo-study/</url>
+    <content><![CDATA[<p>1.新的段落，换行之后加一个回车。<br>2.数学公式中有_的，都要写成<code>\_</code>，以免自动转换成斜体。<br>3.要写hexo语法词时使用<br>&lt;% raw %&gt;<br>code<br>&lt;% endraw %&gt;<br>不转义code内容<br>4.要手写单页css style时，要把css标签写在后面，不能写在开头。<br>5.文章结尾不能出现```，几率导致生成index页时，该文章之后的文章无法加载到index。文章结尾还是加一个空行比较保险。-_-|||</p>
+]]></content>
+      <tags>
+        <tag>hexo</tag>
+        <tag>markdown</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>fedora安装、使用记录记录</title>
+    <url>/2018/09/05/install-fedora/</url>
+    <content><![CDATA[<p>笔记本新装了个SSD，总共有两个SSD和一个机械硬盘，第一块SSD是自带的win10，于是在新SSD上装个Fedora，用于各种折腾，跟Win10组双系统。此处记录Fedora安装和使用过程中遇到的问题。   </p>
+<span id="more"></span>
+<h2 id="一：系统安装"><a href="#一：系统安装" class="headerlink" title="一：系统安装"></a>一：系统安装</h2><p>系统安装遇到的问题主要集中在<code>Fedora</code>和nvidia显卡上。<br>主要说出现问题的地方。<br>1.安装完成后，不能使用nvidia官方驱动，也不能使用系统软件管理中带的驱动，要根据<a href="https://rpmfusion.org/Howto/NVIDIA">这篇文章</a>介绍的方法来装截取关键代码如下：  </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">dnf install xorg-x11-drv-nvidia akmod-nvidia</span><br><span class="line">dnf install xorg-x11-drv-nvidia-cuda <span class="comment">#optional for cuda/nvdec/nvenc support</span></span><br><span class="line">dnf update -y</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="软件安装记录"><a href="#软件安装记录" class="headerlink" title="软件安装记录"></a>软件安装记录</h2><h3 id="1-docker"><a href="#1-docker" class="headerlink" title="1.docker"></a>1.docker</h3><p>docker安装借助了<a href="https://mirrors.tuna.tsinghua.edu.cn/help/docker-ce/">清华大学开源镜像站</a>  </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">curl -O /etc/yum.repos.d/docker-ce.repo https://download.docker.com/linux/fedora/docker-ce.repo</span><br></pre></td></tr></table></figure>
+<p>把软件仓库地址替换为 TUNA:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo sed -i <span class="string">&#x27;s+download.docker.com+mirrors.tuna.tsinghua.edu.cn/docker-ce+&#x27;</span> /etc/yum.repos.d/docker-ce.repo</span><br></pre></td></tr></table></figure>
+<p>最后安装:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo yum makecache fast</span><br><span class="line">sudo yum install docker-ce</span><br></pre></td></tr></table></figure>
+
+<div style="display:none">
+### 2.4had0w40ck4  
+直接使用pip命令安装
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">pip3 install shadowsocks</span><br></pre></td></tr></table></figure>
+</div>  
+
+<h3 id="3-proxychains4"><a href="#3-proxychains4" class="headerlink" title="3.proxychains4"></a>3.proxychains4</h3><p>在系统配置中开启全局代理，其它软件中竟然无法使用。使用<code>proxychains4</code>就可以了。<br>安装方式：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo dnf install -y proxychains-ng</span><br></pre></td></tr></table></figure>
+<p>安装后，在<code>/etc/proxychains.conf</code>文件结尾加上要使用的代理配置 <code>代理方式 ip 端口</code><br>例如：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">socks5 127.0.0.1 1080</span><br></pre></td></tr></table></figure>
+<p>需要使用代理的工具，直接在前面加上<code>proxychains4</code>就可以了，例如： </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">proxychains curl -O http://www.abc.com/</span><br></pre></td></tr></table></figure>
+<h3 id="4-BaiduPCS-Go"><a href="#4-BaiduPCS-Go" class="headerlink" title="4.BaiduPCS-Go"></a>4.BaiduPCS-Go</h3><p>一个百度网盘的命令行工具，下载release解压后即可使用<a href="https://github.com/ybbxk/BaiduPCS-Go">BaiduPCS-Go</a>。</p>
+<h3 id="5-ariac2-计划中"><a href="#5-ariac2-计划中" class="headerlink" title="5.ariac2(计划中)"></a>5.ariac2(计划中)</h3>]]></content>
+      <categories>
+        <category>fedora</category>
+      </categories>
+      <tags>
+        <tag>centos</tag>
+        <tag>fedora</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>linux脚本</title>
+    <url>/2016/04/07/linux-script/</url>
+    <content><![CDATA[<p>1.使用cp时强制覆盖，两种方案:(<a href="http://stackoverflow.com/a/8488293">来源</a>)<br>a) <code>/bin/cp -rf /zzz/zzz/* /xxx/xxx</code><br>b) <code>/bin/cp -rf /zzz/zzz/* /xxx/xxx</code><br>原来当使用root登陆时，环境变量中会有一条 <code>alias cp = cp -i</code> ，用于防止管理员误操作。</p>
+<p>2.crontab环境变量<br>  crontab执行命令时，并不适用当前用户的环境变量，编写任务时最好使用全路径。确实需要环境变量时，可以在crontab文件的指令中直接执行 <code>source ~/.bash_profile</code> 或 <code>/etc/profile</code>等加载用户环境变量。<br>3.crontab中的run-parts<br>  运行指定目录中的所有脚本，注意脚本文件中不能含有’.’，因为不含有任何参数的run-parts将会忽略他们。例如backup.sh这个脚本是不会被执行的。</p>
+]]></content>
+      <tags>
+        <tag>linux</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>magento后台管理页面404错误</title>
+    <url>/2015/12/29/magento-admin-page-404/</url>
+    <content><![CDATA[<p>做magento开发，为了方便数据同步，直接把线上数据库导入本地，结果后台管理界面直接返回404。在<a href="http://stackoverflow.com/questions/5178066/error-404-not-found-in-magento-admin-login-page">stackoverflow</a>找到了解决方法，执行如下sql语句，即可解决。  </p>
+<pre><code class="sql">SET FOREIGN_KEY_CHECKS=0;
+UPDATE `core_store` SET store_id = 0 WHERE code=&#39;admin&#39;;
+UPDATE `core_store_group` SET group_id = 0 WHERE name=&#39;Default&#39;;
+UPDATE `core_website` SET website_id = 0 WHERE code=&#39;admin&#39;;
+UPDATE `customer_group` SET customer_group_id = 0 WHERE customer_group_code=&#39;NOT LOGGED IN&#39;;
+SET FOREIGN_KEY_CHECKS=1;
+</code></pre>
+<p>按照作者的意思，store_id,group_id,website_id,customer_group_id这些id的值应该是0，但在数据导入新服务器时丢失了。从sql语句中推测大概是因为外键检查导致的数据丢失。所以重新设置数据库的这些字段可以解决问题。</p>
+]]></content>
+      <categories>
+        <category>magento</category>
+      </categories>
+      <tags>
+        <tag>magento</tag>
+        <tag>404</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>magento直接使用sql语句</title>
+    <url>/2016/02/24/magento-directly-sql/</url>
+    <content><![CDATA[<p>原文<a href="http://fishpig.co.uk/magento/tutorials/direct-sql-queries/">DIRECT SQL QUERIES IN MAGENTO</a>有点长，直接转过来了。<br>Magento’s use of data models provide a great way to access and modify data. Using aptly named methods and clever abstraction, Varien hide away the complex SQL needed to perform data operations. While this makes learning models easier, it often impacts the speed of the operation and therefore the responsiveness of your site. This is especially true when saving models that use the EAV architecture. More often that not, this cannot be avoided, however there are some situations where executing direct SQL queries would be simpler and much quicker leading to a more optimised Magento installation. An example of this is updating product prices globally in Magento. It would be easy enough to write some Magento code that looped through all products and modified the price. On a large data set, saving each individual product can take a long time and therefore make the system unusable. To combat this, it is possible to issue a direct SQL query which could update 1000’s of products in 1 or 2 seconds.</p>
+<span id="more"></span>
+<p>Database Connections In Magento<br>By default, Magento will automatically connect to it’s database and provide two separate resources which you can use to access data: core_read and core_write. As you can probably guess, core_read is for reading from the database while core_write is for writing to the database. It is important to ensure that you use the correct resource when reading or writing data to the database, especially when writing custom Magento extensions that will be released into the wild.</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span>   </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Get the resource model</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$resource</span> = Mage::getSingleton(<span class="string">&#x27;core/resource&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Retrieve the read connection</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$readConnection</span> = <span class="variable">$resource</span>-&gt;getConnection(<span class="string">&#x27;core_read&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Retrieve the write connection</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$writeConnection</span> = <span class="variable">$resource</span>-&gt;getConnection(<span class="string">&#x27;core_write&#x27;</span>);</span><br></pre></td></tr></table></figure>
+<p>Table names and table prefixes<br>When installing Magento, you are given the option to use a table prefix. A table prefix is a string of characters that is added to the start of every table name in your database. These are useful if you are installing multiple system into 1 database as it helps to distinguish each application’s data from another. Fortunately, Magento has a simple built in function which allows you to add the prefix to a given table name.</p>
+<p>Get a table name from a string</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Get the resource model</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$resource</span> = Mage::getSingleton(<span class="string">&#x27;core/resource&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Get the table name</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$tableName</span> = <span class="variable">$resource</span>-&gt;getTableName(<span class="string">&#x27;catalog_product_entity&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * if prefix was &#x27;mage_&#x27; then the below statement</span></span><br><span class="line"><span class="comment">     * would print out mage_catalog_product_entity</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">echo</span> <span class="variable">$tableName</span>;</span><br></pre></td></tr></table></figure>
+<p>Get a table name from an entity name</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Get the resource model</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$resource</span> = Mage::getSingleton(<span class="string">&#x27;core/resource&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Get the table name</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$tableName</span> = <span class="variable">$resource</span>-&gt;getTableName(<span class="string">&#x27;catalog/product&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * if prefix was &#x27;mage_&#x27; then the below statement</span></span><br><span class="line"><span class="comment">     * would print out mage_catalog_product_entity</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">echo</span> <span class="variable">$tableName</span>;</span><br></pre></td></tr></table></figure>
+<p>Reading From The Database<br>While Magento models hide the complexity of the EAV system, they sometimes request far more data than is needed. If for example you have a product ID and want it’s SKU, it would be much quicker to run a single query to obtain this value than to load in a whole product model (the inverse of this operation is available via the product resource class).</p>
+<p>Varien_Db_Select::fetchAll<br>This method takes a query as it’s parameter, executes it and then returns all of the results as an array. In the code example below, we use Varien_Db_Select::fetchAll to return all of the records in the catalog_product_entity table.</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Get the resource model</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$resource</span> = Mage::getSingleton(<span class="string">&#x27;core/resource&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Retrieve the read connection</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$readConnection</span> = <span class="variable">$resource</span>-&gt;getConnection(<span class="string">&#x27;core_read&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="variable">$query</span> = <span class="string">&#x27;SELECT * FROM &#x27;</span> . <span class="variable">$resource</span>-&gt;getTableName(<span class="string">&#x27;catalog/product&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Execute the query and store the results in $results</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$results</span> = <span class="variable">$readConnection</span>-&gt;fetchAll(<span class="variable">$query</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Print out the results</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">     var_dump(<span class="variable">$results</span>);</span><br></pre></td></tr></table></figure>
+<p>Varien_Db_Select::fetchCol<br>This method is similar to fetchAll except that instead of returning all of the results, it returns the first column from each result row. In the code example below, we use Varien_Db_Select::fetchCol to retrieve all of the SKU’s in our database in an array.</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">      * Get the resource model</span></span><br><span class="line"><span class="comment">      */</span></span><br><span class="line">    <span class="variable">$resource</span> = Mage::getSingleton(<span class="string">&#x27;core/resource&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Retrieve the read connection</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$readConnection</span> = <span class="variable">$resource</span>-&gt;getConnection(<span class="string">&#x27;core_read&#x27;</span>);</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Retrieve our table name</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$table</span> = <span class="variable">$resource</span>-&gt;getTableName(<span class="string">&#x27;catalog/product&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Execute the query and store the results in $results</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$sku</span> = <span class="variable">$readConnection</span>-&gt;fetchCol(<span class="string">&#x27;SELECT sku FROM &#x27;</span> . <span class="variable">$table</span> . <span class="string">&#x27;*&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Print out the results</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">     var_dump(<span class="variable">$results</span>);</span><br></pre></td></tr></table></figure>
+<p>Try this code and look at the results. Notice how all of the SKU’s are in a single array, rather than each row having it’s own array? If you don’t understand this, try changing fetchCol for fetchAll and compare the differences.</p>
+<p>Varien_Db_Select::fetchOne<br>Unlike the previous two methods, Varien_Db_Select::fetchOne returns one value from the first row only. This value is returned on it’s own and is not wrapped in an array. In the code example below, we take a product ID of 44 and return it’s SKU.</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Get the resource model</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$resource</span> = Mage::getSingleton(<span class="string">&#x27;core/resource&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Retrieve the read connection</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$readConnection</span> = <span class="variable">$resource</span>-&gt;getConnection(<span class="string">&#x27;core_read&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Retrieve our table name</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$table</span> = <span class="variable">$resource</span>-&gt;getTableName(<span class="string">&#x27;catalog/product&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Set the product ID</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$productId</span> = <span class="number">44</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="variable">$query</span> = <span class="string">&#x27;SELECT sku FROM &#x27;</span> . <span class="variable">$table</span> . <span class="string">&#x27; WHERE entity_id = &#x27;</span></span><br><span class="line">             . (<span class="keyword">int</span>)<span class="variable">$productId</span> . <span class="string">&#x27; LIMIT 1&#x27;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Execute the query and store the result in $sku</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$sku</span> = <span class="variable">$readConnection</span>-&gt;fetchOne(<span class="variable">$query</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Print the SKU to the screen</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&#x27;SKU: &#x27;</span> . <span class="variable">$sku</span> . <span class="string">&#x27;&lt;br/&gt;&#x27;</span>;</span><br></pre></td></tr></table></figure>
+<p>When trying out this example, ensure you change the product ID to an ID that exists in your database!</p>
+<p>You may think that fetchOne works the same as fetchCol or fetchAll would if you only added 1 column to the SELECT query and added a ‘LIMIT 1’, however you would be wrong. The main difference with this function is that the value returned is the actual value, where as Varien_Db_Select::fetchCol and Varien_Db_Select::fetchAll would wrap the value in an array. To understand this a little, try swapping the method’s and comparing the results.</p>
+<p>Writing To The Database<br>When saving a Magento model, there can be a lot of background data being saved that you weren’t even aware of. For example, saving a product model can take several seconds due to the amount of related data saves and indexing that needs to take place. This is okay if you need all the data saving, but if you only want to update the SKU of a product, this can be wasteful.</p>
+<p>The example code below will show you how when given a product ID, you can alter the SKU. This is a trivial example but should illustrate how to execute write queries against your Magento database.</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Get the resource model</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$resource</span> = Mage::getSingleton(<span class="string">&#x27;core/resource&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Retrieve the write connection</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$writeConnection</span> = <span class="variable">$resource</span>-&gt;getConnection(<span class="string">&#x27;core_write&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Retrieve our table name</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$table</span> = <span class="variable">$resource</span>-&gt;getTableName(<span class="string">&#x27;catalog/product&#x27;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Set the product ID</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$productId</span> = <span class="number">44</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Set the new SKU</span></span><br><span class="line"><span class="comment">     * It is assumed that you are hard coding the new SKU in</span></span><br><span class="line"><span class="comment">     * If the input is not dynamic, consider using the</span></span><br><span class="line"><span class="comment">     * Varien_Db_Select object to insert data</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$newSku</span> = <span class="string">&#x27;new-sku&#x27;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="variable">$query</span> = <span class="string">&quot;UPDATE <span class="subst">&#123;$table&#125;</span> SET sku = &#x27;<span class="subst">&#123;$sku&#125;</span>&#x27; WHERE entity_id = &quot;</span></span><br><span class="line">             . (<span class="keyword">int</span>)<span class="variable">$productId</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Execute the query</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="variable">$writeConnection</span>-&gt;query(<span class="variable">$query</span>);</span><br></pre></td></tr></table></figure>
+<p>To test this has worked, use the knowledge gained from the first part of this tutorial to write a query to extract the SKU that has just been changed.</p>
+<p>Varien_Db_Select<br>The Varien_Db_Select, which has been touched on in this article is a far better option for extracting/wriiting information. Not only is it easy to use, it also provides a layered of security, which if used correctly, is impenetrable. More will be covered on Varien_Db_Select (aka Zend_Db_Select) in a future article.</p>
+<p>Conclusion<br>Sometimes it is necessary to execute direct SQL queries in Magento, however, please be careful! The Magento model’s are there for a reason and provide a layer of security which you will have to manually add to your own direct SQL queries. Be sure to escape any user input and when possible, stick to the Magento model methods! If you can’t stick to the Magento models, consider using Varien_Db_Select; it won’t stop you making errors but it will add an almost impenetrable layer of security to your database queries.</p>
+<p>As a side note, if you’re going to be querying the database directly, it would be a good idea to learn about Magento’s EAV database architecture.<br><a href="http://fishpig.co.uk/magento/tutorials/direct-sql-queries/">DIRECT SQL QUERIES IN MAGENTO</a></p>
+]]></content>
+      <categories>
+        <category>magento</category>
+        <category>php</category>
+      </categories>
+      <tags>
+        <tag>magento</tag>
+        <tag>sql</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>magento-failed-to-open-stream-soapclient.php</title>
+    <url>/2016/01/25/magento-failed-to-open-stream-soapclient-php/</url>
+    <content><![CDATA[<pre><code>Warning: include(SoapClient.php): failed to open stream: No such file or directory
+</code></pre>
+<p>新部署magento时，出现上面一条错误，原因是未安装php-soap，安装php-soap就没有错误了，要根据已安装的php版本来选择。</p>
+]]></content>
+      <categories>
+        <category>magento</category>
+        <category>php</category>
+      </categories>
+      <tags>
+        <tag>magento</tag>
+        <tag>soapclient</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Magento的block type解释</title>
+    <url>/2016/02/23/magento-xml-block-type/</url>
+    <content><![CDATA[<p>Magento在xml文件中block的type解释。结果也是在网上搜到的，按照 <code>type=&quot;A/B&quot;</code>的格式来解释。<br>答案转自<a href="http://stackoverflow.com/questions/6633307/understanding-magento-block-and-block-type">链接</a>。 </p>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">block</span> <span class="attr">type</span>=<span class="string">&quot;page/html&quot;</span> <span class="attr">name</span>=<span class="string">&quot;root&quot;</span> <span class="attr">output</span>=<span class="string">&quot;toHtml&quot;</span> <span class="attr">template</span>=<span class="string">&quot;example/view.phtml&quot;</span>&gt;</span> </span><br></pre></td></tr></table></figure>
+<p>A是一个模块的别名。在这个例子里，’page’是Mage_Page_block(在文件app/code/core/Mage/Page/etc/config.xml中定义)。<br>B是A模块中的一个class名，每个词的首字母大写。在这个例子中，html转换为Html，是Mage_Page_block_Html的别名。这个文件大概在app/code/core/Mage/Page/Block/Html.php ，因为在Magento中，类名可以直接转换为路径。<br>如果用model别名替换block别名结果则是Mage_Page_model。换成resource models和helpers也是一样的。自己写的模块如果包含block、models、helpers也应该在配置文件里(config/)定义。<br><a href="http://stackoverflow.com/questions/6633307/understanding-magento-block-and-block-type">链接</a></p>
+]]></content>
+      <categories>
+        <category>magento</category>
+        <category>php</category>
+      </categories>
+      <tags>
+        <tag>magento</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>menu</title>
+    <url>/2015/09/16/menu/</url>
+    <content><![CDATA[<h1 id="first-leve"><a href="#first-leve" class="headerlink" title="first leve"></a>first leve</h1><h2 id="second-leve"><a href="#second-leve" class="headerlink" title="second leve"></a>second leve</h2><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">st&#x3D;&gt;start: Start</span><br><span class="line">op&#x3D;&gt;operation: Your Operation</span><br><span class="line">cond&#x3D;&gt;condition: Yes or No?</span><br><span class="line">e&#x3D;&gt;end</span><br><span class="line"></span><br><span class="line">st-&gt;op-&gt;cond</span><br><span class="line">cond(yes)-&gt;e</span><br><span class="line">cond(no)-&gt;op</span><br></pre></td></tr></table></figure>
+<h1 id="bb"><a href="#bb" class="headerlink" title="bb"></a>bb</h1><h1 id="cc"><a href="#cc" class="headerlink" title="cc"></a>cc</h1><p>$$\sum_{i=1}^n a_i=0$$</p>
+<p>$$\sum^{j-1}_{k=0}{\widehat{\gamma}_{kj} z_k}$$<br>$$f(x_1,x_x,\ldots,x_n) = x_1^2 + x_2^2 + \cdots + x_n^2 $$</p>
+<h1 id="dd"><a href="#dd" class="headerlink" title="dd"></a>dd</h1><table>
+<tr>
+<th rowspan="2">值班人员</th>
+<th>星期一</th>
+<th>星期二</th>
+<th>星期三</th>
+</tr>
+<tr>
+<td>李强</td>
+<td>张明</td>
+<td>王平</td>
+</tr>
+</table>
+]]></content>
+  </entry>
+  <entry>
+    <title>mysql the user specified as a definer issue</title>
+    <url>/2019/08/31/mysql-the-user-specified-as-a-definer-issue/</url>
+    <content><![CDATA[<p>好久没用家里电脑的环境了，今天通过php写入数据库时出现了这个错误<code>SQLSTATE[HY000]: General error: 1449 The user specified as a definer (&#39;mysql.infoschema&#39;@&#39;localhost&#39;) does not exist</code>，一开始还以为是代码或者配置的问题，网上搜索后才知道是mysql版本升级或者降级后数据库表权限需要更新，执行下面的指令就可以恢复:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">mysql -u root -p</span><br><span class="line">mysql&gt; SET GLOBAL innodb_fast_shutdown = 1;</span><br><span class="line">mysql_upgrade -u root -p</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <tags>
+        <tag>mysql</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>mysql问题记录</title>
+    <url>/2017/09/05/mysql/</url>
+    <content><![CDATA[<p>1.sql语句<code>select * from db_table where field != 12;</code>，当<code>field</code>值为<code>null</code>时，查不到该结果，sql语句需要修改为<code>select * from db_table where field != 12 or field is null;</code></p>
+]]></content>
+      <tags>
+        <tag>mysql</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>重置mysql root密码</title>
+    <url>/2015/10/26/mysql_reset_root_password/</url>
+    <content><![CDATA[<p>新的项目要用mysql5.6.x，centos默认的yum库只有mariadb，兼容mysql5.5。<br>看msyql文档装了社区版的5.7，却无法进入mysql，看到网上介绍的mysqld_safe指令重置密码，却发现5.7没有mysqld_safe指令。郁闷ing，再没找到其它方法，只能卸载5.7，安装5.6。  </p>
+<p>Mysql<a href="https://dev.mysql.com/doc/refman/5.0/en/resetting-permissions.html">官网</a>有详细的介绍：<br>1.使用运行mysql服务的账号登陆系统。<br>2.停止mysql服务，我使用命令：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">systemctl stop mysql</span><br></pre></td></tr></table></figure>
+
+<p>3.新建一个文件，写入如下内容：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">SET PASSWORD FOR <span class="string">&#x27;root&#x27;</span>@<span class="string">&#x27;localhost&#x27;</span> = PASSWORD(<span class="string">&#x27;MyNewPass&#x27;</span>);</span><br></pre></td></tr></table></figure>
+<p><code>MyNewPass</code> 字段使用新的密码<br>4.妥善保管上一步得到的文件，确保mysql命令有权限读取该文件。<br>5.执行命令</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">mysqld_safe --init-file=/home/me/mysql-init &amp;</span><br></pre></td></tr></table></figure>
+<p>这里<code>/home/me/mysql-init</code>就是第三步得到的文件<br>6.mysql服务启动后，删除<code>/home/me/mysql-init</code>文件。  </p>
+<p>之后就可以用新密码登陆mysql了，记录一下。</p>
+]]></content>
+      <tags>
+        <tag>mysql</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Nginx出现413 Request Entity Too Large错误解决方法</title>
+    <url>/2016/03/12/nginx-413/</url>
+    <content><![CDATA[<p> Nginx出现的413 Request Entity Too Large错误,这个错误一般在上传文件的时候出现，打开nginx主配置文件nginx.conf，找到http{}段，添加<br>解决方法就是<br>打开nginx主配置文件nginx.conf，一般在/usr/local/nginx/conf/nginx.conf这个位置，找到http{}段，修改或者添加<br>代码如下    复制代码<br>client_max_body_size 2m;<br>然后重启nginx，<br>代码如下    复制代码</p>
+<p>sudo /etc/init.d/nginxd reload<br>即可。<br>要是以php运行的话，这个大小client_max_body_size要和php.ini中的如下值的最大值差不多或者稍大，这样就不会因为提交数据大小不一致出现错误。<br>代码如下    复制代码<br>post_max_size = 2M<br>upload_max_filesize = 2M<br>重启NGINX<br>代码如下    复制代码<br>kill -HUP <code>cat /usr/local/nginx/nginx.pid </code><br>恢复正常</p>
+<p>除非特别声明，PHP100新闻均为原创或投稿报道，转载请注明作者及原文链接<br>原文地址： <a href="http://www.php100.com/html/program/nginx/2013/0905/5516.html">http://www.php100.com/html/program/nginx/2013/0905/5516.html</a></p>
+]]></content>
+      <tags>
+        <tag>nginx</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>nginx 403难题</title>
+    <url>/2015/09/29/nginx_403/</url>
+    <content><![CDATA[<p>今天遇到个怪事，nginx server_root目录下的文件有读权限，层层目录也都有执行权限，但就是无法访问。</p>
+<p>各种google之后终于找到了<a href="http://stackoverflow.com/a/26228135">原因</a>。关闭<code>SELinux</code>之后访问正常，暂时不清楚具体原因，做个记录先。</p>
+]]></content>
+      <tags>
+        <tag>nginx</tag>
+        <tag>403</tag>
+        <tag>SELinux</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>段落效果</title>
+    <url>/2015/10/10/paragraph-effect/</url>
+    <content><![CDATA[<p>按照中文的习惯，每段都要空两个字符，结果用markdown时，发现手动输入的空格都被过滤了，无效。搜索一番后找到方法，两个<code>&amp;emsp;</code>即可解决。  </p>
+<p class="ds">但是每次都要手动输入，比较麻烦，想到了用css解决，加入这么一段就OK
+`p{text-indent: 2em;}`</p>
+<p class="fd">脑洞大开，又想到了其它效果，**首字下沉**，也找到了相应的css  
+`p:first-letter:first-child {font-size:2.5em; font-family:"楷体","楷体_GB2312"; font-weight:bold; line-height:1.2em; float:left; padding:5px 2px 0 0; color:#c00;}`</p>
+
+<p>这下两种方案都有了解决方法，然后又有了新的想法，要是两种方案能通过变量控制就更好了。</p>
+<p>方法，在主题的<code>/layout/_partials/head.swig</code>文件中增加如下代码：</p>
+
+{% if is_post() %}
+
+<br>
+
+{% if page.paragraph === 'ds' or page.paragraph === "" %}
+
+<br>
+&lt;style type="text/css"&gt;
+<br>
+p{text-indent: 2em;}
+<br>
+&lt;/style&gt;
+<br>
+
+{% elseif page.paragraph === 'fd' %}
+
+<br>
+&lt;style type="text/css"&gt;
+<br>
+p:first-letter {font-size:2.5em; font-family:"楷体","楷体_GB2312"; font-weight:bold; line-height:1.2em; float:left; padding:5px 2px 0 0; color:#c00;}
+<br>
+&lt;/style&gt;
+<br>
+
+{% endif %}
+{% endif %}
+
+
+<p>写文章时，在Front-matter中加上 <code>paragraph: ds/fd</code>字段，ds表示段落前增加两个空字符；<code>fd</code>表示首字下沉；不写时默认为<code>ds</code>；不想要段落格式转换时填上其它内容，我用了<code>none</code>。后期有其它想法时，可以再增加。</p>
+<style type="text/css">
+p.ds{text-indent: 2em;}
+p.fd:first-letter {font-size:2.5em; font-family:"楷体","楷体_GB2312"; font-weight:bold; line-height:1.2em; float:left; padding:5px 2px 0 0; color:#c00;}
+</style>
+]]></content>
+      <categories>
+        <category>前端</category>
+      </categories>
+      <tags>
+        <tag>hexo</tag>
+        <tag>css</tag>
+        <tag>前端</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>php parse error</title>
+    <url>/2016/02/29/php-parse-error/</url>
+    <content><![CDATA[<p>PHP模版文件打开后出现”Parse error: syntax error, unexpected end of file in ‘file path’”,在<a href="http://stackoverflow.com/questions/11482527/parse-error-syntax-error-unexpected-end-of-file-in-my-php-code">stackoverflow</a>找到了解决方法。  </p>
+<blockquote>
+<p>在代码的行尾要尽量避免这种</p>
+</blockquote>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line">&#123;<span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>和这种代码</p>
+</blockquote>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span>&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>要使用空格分开，像这样</p>
+</blockquote>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line">&#123; <span class="meta">?&gt;</span></span><br><span class="line"><span class="meta">&lt;?php</span> &#123;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>还要避免使用 <code>&lt;?</code> 而应该使用 <code>&lt;?php</code> 。  </p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>php</category>
+      </categories>
+      <tags>
+        <tag>php</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>PHP学习笔记</title>
+    <url>/2015/09/17/php_study_note/</url>
+    <content><![CDATA[<p>1、销毁一个session变量使用<code>unset($_SESSION[&#39;myvar&#39;]_)</code>;<br>我们不能销毁整个<code>$_SESSION</code>数组(<code>unset($_SESSION</code>)),因为这样将禁用会话功能。要一次销毁所有的会话变量，可以使用如下所示语句：</p>
+<figure class="highlight lasso"><table><tr><td class="code"><pre><span class="line">$_SESSION = <span class="built_in">array</span>();</span><br></pre></td></tr></table></figure>
+<p>当使用完一个会话后，首先应该注解所有的变量，然后再调用：<code>session_destroy();</code>来清除会话ID  </p>
+<p>2、<strong>eval()</strong> 把字符串作为PHP代码执行  </p>
+<p>3、<code>is_file()</code> 和 <code>file_exists()</code> 的区别：当参数是<strong>目录</strong>时，<code>file_exists()</code>返回 <code>true</code>，<code>is_file()</code> 返回<code>false</code>;<br>4、 <code>__autoload()</code>和<code>spl_autoload_register()</code>都是自动加载php文件。区别是：<code>spl_autoload_register()</code>高效且支持多个，方便在框架中和在第三方库时使用。<code>__autoload()</code>可能在后期的版本中弃用。所以尽量使用<code>spl_autoload_register()</code>。<br>5、 <code>$GLOBALS[&#39;HTTP_RAW_POST_DATA&#39;]</code> 在php5.6.0开始弃用，使用 <code>php://input</code> 代替，如： <code>file_get_contents(&quot;php://input&quot;);</code><br>6、建议避免将三元运算符堆积在一起使用。当在一条语句中使用多个三元运算符时会造成 PHP 运算结果不清晰：<br>Example #4 不清晰的三元运算符行为</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="comment">// 乍看起来下面的输出是 &#x27;true&#x27;</span></span><br><span class="line"><span class="keyword">echo</span> (<span class="literal">true</span>?<span class="string">&#x27;true&#x27;</span>:<span class="literal">false</span>?<span class="string">&#x27;t&#x27;</span>:<span class="string">&#x27;f&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 然而，上面语句的实际输出是&#x27;t&#x27;，因为三元运算符是从左往右计算的</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 下面是与上面等价的语句，但更清晰</span></span><br><span class="line"><span class="keyword">echo</span> ((<span class="literal">true</span> ? <span class="string">&#x27;true&#x27;</span> : <span class="string">&#x27;false&#x27;</span>) ? <span class="string">&#x27;t&#x27;</span> : <span class="string">&#x27;f&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// here, you can see that the first expression is evaluated to &#x27;true&#x27;, which</span></span><br><span class="line"><span class="comment">// in turn evaluates to (bool)true, thus returning the true branch of the</span></span><br><span class="line"><span class="comment">// second ternary expression.</span></span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>php</category>
+      </categories>
+      <tags>
+        <tag>php</tag>
+        <tag>study</tag>
+        <tag>note</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>redis-incr</title>
+    <url>/2017/10/19/redis-incr/</url>
+    <content><![CDATA[<p>redis-incr在非事务情况下会返回修改后的新值，在事务中返回空数组。</p>
+]]></content>
+      <tags>
+        <tag>redis</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>selenium</title>
+    <url>/2016/09/22/selenium%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/</url>
+    <content><![CDATA[<p>1.鼠标悬停的实现方式 </p>
+<blockquote>
+<p>a)<br>  <figure class="highlight python"><table><tr><td class="code"><pre><span class="line">test = browser.find_element_by_id(<span class="string">&quot;qmenu&quot;</span>)</span><br><span class="line">hover = ActionChains(browser).move_to_element(test)</span><br><span class="line">hover.perform()</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<blockquote>
+<p>b)</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> selenium.webdriver.common.action_chains <span class="keyword">import</span> ActionChains</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">hover</span>(<span class="params">self</span>):</span></span><br><span class="line">    wd = webdriver_connection.connection</span><br><span class="line">    element = wd.find_element_by_link_text(self.locator)</span><br><span class="line">    hov = ActionChains(wd).move_to_element(element)</span><br><span class="line">    hov.perform()</span><br></pre></td></tr></table></figure>
+<p>2.翻页功能</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">driver.execute_script(<span class="string">&quot;window.scrollTo(0, document.body.scrollHeight);&quot;</span>)</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>selenium</category>
+        <category>python</category>
+      </categories>
+      <tags>
+        <tag>selenium</tag>
+        <tag>python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>为 SSL 站点启用 Certificate Transparency 功能</title>
+    <url>/2016/02/24/ssl-certificate-transparency/</url>
+    <content><![CDATA[<p>转载自：<a href="http://blog.eqoe.cn/posts/enable-certificate-transparency-for-nginx.html">为 SSL 站点启用 Certificate Transparency 功能</a><br>下载 nginx 源代码和 nginx-ct 的源代码：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">wget http://nginx.org/download/nginx-1.9.6.tar.gz</span><br><span class="line">wget -O nginx-ct.zip https://github.com/grahamedgecombe/nginx-ct/archive/master.zip</span><br><span class="line">tar zxf nginx-1.9.6.tar.gz</span><br><span class="line">unzip nginx-ct.zip</span><br></pre></td></tr></table></figure>
+<p>编译 nginx ( 你也可以带上你自己的参数，加上 ssl 和 ct module 就可以）</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="built_in">cd</span> nginx-1.9.6/</span><br><span class="line">./configure --with-http_v2_module --with-http_ssl_module --add-module=../nginx-ct-master</span><br></pre></td></tr></table></figure>
+<p>创建 SCT 的文件夹</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">mkdir /etc/ssl/scts/</span><br></pre></td></tr></table></figure>
+<p>下载证书提交工具</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">wget -O ct-submit.zip https://github.com/grahamedgecombe/ct-submit/archive/master.zip</span><br><span class="line">unzip ct-submit.zip</span><br><span class="line"><span class="built_in">cd</span> ct-submit-master/</span><br><span class="line"><span class="comment"># 请确保已经安装 go 语言</span></span><br><span class="line">go build</span><br></pre></td></tr></table></figure>
+<p>将证书提交到 Certificate Transparency Log 服务器，假设你的 SSL 证书在 /etc/ssl/server.crt （带证书链的）</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">sudo sh -c <span class="string">&quot;./ct-submit-master ct.googleapis.com/aviator \</span></span><br><span class="line"><span class="string">  &lt;/etc/ssl/server.crt \</span></span><br><span class="line"><span class="string">  &gt;/etc/ssl/scts/aviator.sct&quot;</span></span><br><span class="line">sudo sh -c <span class="string">&quot;./ct-submit-master ct.googleapis.com/pilot \</span></span><br><span class="line"><span class="string">  &lt;/etc/ssl/server.crt \</span></span><br><span class="line"><span class="string">  &gt;/etc/ssl/scts/pilot.sct&quot;</span></span><br><span class="line">sudo sh -c <span class="string">&quot;./ct-submit-master ct.googleapis.com/rocketeer \</span></span><br><span class="line"><span class="string">  &lt;/etc/ssl/server.crt \</span></span><br><span class="line"><span class="string">  &gt;/etc/ssl/scts/rocketeer.sct&quot;</span></span><br></pre></td></tr></table></figure>
+<p>然后在 nginx 配置中添加</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">ssl_ct on;</span><br><span class="line">ssl_ct_static_scts /etc/ssl/scts;</span><br></pre></td></tr></table></figure>
+<p>以上内容转载自：<a href="http://blog.eqoe.cn/posts/enable-certificate-transparency-for-nginx.html">为 SSL 站点启用 Certificate Transparency 功能</a><br>可能因为使用的linux发行版不一样，我用的是centos，在执行nginx的configure时需要指定openssl的源码路径(openssl 1.0.2+，我用的是 openssl-1.0.2f，奇怪的版本号)，否则会有未定义函数的报错。</p>
+<pre><code class="sh">--with-openssl=/path/to/openssl
+</code></pre>
+]]></content>
+      <tags>
+        <tag>ssl</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>test</title>
+    <url>/2015/09/16/test/</url>
+    <content><![CDATA[<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> test (a,b,c) <span class="keyword">values</span> (<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>);</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> test;</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<p>This is more content;</p>
+]]></content>
+      <tags>
+        <tag>sql</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>tttthehexo</title>
+    <url>/2015/09/15/tttthehexo/</url>
+    <content><![CDATA[<p>this is a test $E=mc^2$ </p>
+]]></content>
+      <tags>
+        <tag>ttt</tag>
+        <tag>aaa</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>电驴下载</title>
+    <url>/2017/10/21/verycd/</url>
+    <content><![CDATA[<p>电驴链接经过 <code>www.verycd.com =&gt; www.verycd.gdajie.com</code> 的转换后，就可以找到下载链接。</p>
+]]></content>
+      <categories>
+        <category>工具</category>
+        <category>下载</category>
+        <category>电驴</category>
+      </categories>
+      <tags>
+        <tag>verycd</tag>
+        <tag>电驴</tag>
+        <tag>下载</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>vim中的正则</title>
+    <url>/2015/11/05/vim/</url>
+    <content><![CDATA[<p>vim中使用正则表达式的格式稍有点却别，今天用分组搜索时发现<code>(</code>是可以直接搜索到的，括号要用作语法词时，需要转意写为<code>\(</code>。</p>
+]]></content>
+      <tags>
+        <tag>regular</tag>
+        <tag>vim</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>虚拟机挂载主机共享文件夹</title>
+    <url>/2016/01/05/virtualbox-mount-shared-folder/</url>
+    <content><![CDATA[<p>通过下面的指令可以挂载目录，并指定所属用户和用户组</p>
+<pre><code class="sh">sudo mount -t vboxsf -o uid=1000,gid=1000 host_shared_folder /path/to/local/
+</code></pre>
+]]></content>
+      <tags>
+        <tag>virtualbox</tag>
+        <tag>mount</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>带空格文件名使用xargs问题</title>
+    <url>/2017/07/21/xargs-with-space/</url>
+    <content><![CDATA[<p>多文件使用xargs操作时，经常会出现带空格的文件名，而有文件找不到的错误提示。在 <a href="https://stackoverflow.com/questions/16758525/how-can-i-make-xargs-handle-filenames-that-contain-spaces">stackoverflow</a>上找到两种解决方法。在此贴上。</p>
+<p>1.使用换行符(\n)作为分隔符</p>
+<figure class="highlight mel"><table><tr><td class="code"><pre><span class="line"><span class="keyword">ls</span> *mp3 | xargs -d <span class="string">&#x27;\n&#x27;</span> mplayer</span><br></pre></td></tr></table></figure>
+<p>2.跟find连用时</p>
+<figure class="highlight delphi"><table><tr><td class="code"><pre><span class="line">-<span class="number">0</span>      Change xargs <span class="keyword">to</span> expect NUL (``\<span class="number">0</span><span class="string">&#x27;&#x27;</span>) characters <span class="keyword">as</span> separators,</span><br><span class="line">        instead <span class="keyword">of</span> spaces <span class="keyword">and</span> newlines.  This <span class="keyword">is</span> expected <span class="keyword">to</span> be used <span class="keyword">in</span></span><br><span class="line">        concert <span class="keyword">with</span> the -print0 <span class="function"><span class="keyword">function</span> <span class="title">in</span> <span class="title">find</span><span class="params">(1)</span>.</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">find</span> . -name <span class="string">&quot;*.mp3&quot;</span> -print<span class="number">0</span> | xargs -<span class="number">0</span> mplayer</span><br></pre></td></tr></table></figure>]]></content>
+      <tags>
+        <tag>xargs</tag>
+        <tag>shell</tag>
+        <tag>script</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title></title>
+    <url>/404.html</url>
+    <content><![CDATA[<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8;"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="robots" content="all" />
+  <meta name="robots" content="index,follow"/>
+</head>
+<body>
+
+  <script type="text/javascript" src="http://www.qq.com/404/search_children.js" charset="utf-8" homePageUrl="/" homePageName="回到我的主页"></script>
+
+</body>
+</html>
+]]></content>
+  </entry>
+  <entry>
+    <title>about</title>
+    <url>/about/index.html</url>
+    <content><![CDATA[<p>木有介绍</p>
+]]></content>
+  </entry>
+  <entry>
+    <title>categories</title>
+    <url>/categories/index.html</url>
+    <content><![CDATA[]]></content>
+  </entry>
+  <entry>
+    <title>便签</title>
+    <url>/memo/index.html</url>
+    <content><![CDATA[<p>1.增加数据库用户权限<br><code>grant all privileges on dbname.* to username@&#39;%&#39; identified by &#39;password&#39;;</code>  </p>
+<p>2.清除 DNS 缓存:<br>chrome://net-internals/#dns  </p>
+<p>3.<a href="http://blog.csdn.net/heiyeshuwu/article/details/50686878">PHP程序员进阶学习书籍参考指南</a>  </p>
+<p>4.git clone 后恢复文件修改时间:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git <span class="built_in">log</span> --pretty=%at --name-status --reverse | perl -ane <span class="string">&#x27;($x,$f)=@F;next if !$x;$t=$x,next if !defined($f)||$s&#123;$f&#125;;$s&#123;$f&#125;=utime($t,$t,$f),next if $x=~/[AM]/;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>5.php xdebug cli  </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">export</span> PHP_IDE_CONFIG=<span class="string">&quot;serverName=serverName&quot;</span> &amp;&amp; <span class="built_in">export</span> XDEBUG_CONFIG=<span class="string">&quot;remote_enable=1 remote_mode=req remote_port=9000 remote_host=ip remote_connect_back=0&quot;</span></span><br></pre></td></tr></table></figure>
+<p><code>serverName</code>是IDE中配置的server name</p>
+<p>6.获取docker容器ip</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker inspect -f <span class="string">&#x27;&#123;&#123;range .NetworkSettings.Networks&#125;&#125;&#123;&#123;.IPAddress&#125;&#125;&#123;&#123;end&#125;&#125;&#x27;</span> container_name_or_id</span><br></pre></td></tr></table></figure>
+<p>7.xargs 处理filename带空格的文件</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">find . -name \*.mp3 -print0 | xargs -0 mplayer</span><br></pre></td></tr></table></figure>
+<p>8.xdebug 连不上时，可以试试把 remote_host 改为</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">xdebug.remote_host=host.docker.internal</span><br></pre></td></tr></table></figure>
+]]></content>
+  </entry>
+  <entry>
+    <title>tags</title>
+    <url>/tags/index.html</url>
+    <content><![CDATA[]]></content>
+  </entry>
+</search>
