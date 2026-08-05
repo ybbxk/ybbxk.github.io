@@ -1,0 +1,74 @@
+language: node_js
+
+node_js:
+- '15'
+
+cache:
+  apt: true
+  directories:
+  - node_modules
+
+env:
+  global:
+  - GIT_PAGE_REF: github.com/ybbxk/ybbxk.github.io.git
+  - GIT_SSH_PAGE_REF: git@github.com:ybbxk/ybbxk.github.io.git
+  - secure: bIwqjj/FNSZVileK3QeS80lVywnhw8kwfka4uvtOkF0a+N2NllRKTzUWQoqJAs8GNdTVQYLQZXbVxtat66SmnHiexEawDeHvQnI51To0opGLeChW0cTLJbjdKS6moYMAjj5KMlt3PPtXxTFxgjt7I9xw4xxygjFZA9zMHL0nRHqpjxt0BhrZXVzTKQUvkrAcG1062ZAywSZ6tpMoztrxy0+Kh4/rBpufLPGybzLsq5n+t8QC4XOQ1x4pghjmPWK58+7mFqph0Uo3VTJBf0IMuGtclgXSF028iEICF8JrnquOYugNjkJij2CnmCc4owgSi1C3c8gzU6z21Psp2WpRDuJczEt9p50RHyhSQeD8YXQD4RV4RQdHtAqNPN9/ujqj+Bsg3OpiMi/NsH+x5hSRwatjxymjohmIIIjWSnAxeQgwZSN7PUJ6CwapSUgAUzJuINSggPCPqDLZNy/9e6f8Dt++BWFnwvrSkGFmQGDBZqhkHWlDSza6L0B9VuXakJ9QkW1yjCtKqp3nD8JNbNnhqq+NjwuTMtea1UQOIZI+8/02knP+l/aX8vJbYY+JmsMvLqkOu3rFNYBIGZbJb9elscv3AGaefz7sV8iySj4zop8aMqUucGDUyCcatYWDB2jxHW/bHx2/YSOInMx5lnrdGhUvICCyq2p3ApbFWtBxlIU=
+
+addons:
+  ssh_known_hosts:
+  - github.com
+  # - git.coding.net
+
+before_install:
+# Decrypt the private key
+- openssl aes-256-cbc -K $encrypted_5a1f41e7e87a_key -iv $encrypted_5a1f41e7e87a_iv -in .travis/id_rsa.enc -out ~/.ssh/id_rsa -d
+# Set the permission of the key
+- chmod 600 ~/.ssh/id_rsa
+# Start SSH agent
+- eval $(ssh-agent)
+# Add the private key to the system
+- ssh-add ~/.ssh/id_rsa
+# Copy SSH config
+- cp .travis/ssh_config ~/.ssh/config
+
+
+install:
+- npm install
+
+before_script:
+- git log --pretty=%at --name-status --reverse | perl -ane '($x,$f)=@F;next if !$x;$t=$x,next if !defined($f)||$s{$f};$s{$f}=utime($t,$t,$f),next if $x=~/[AM]/;'
+- npm install hexo --save
+- git clone https://github.com/theme-next/theme-next-pjax themes/next/source/lib/pjax
+
+script:
+#- gulp build
+- npm install -g hexo-cli
+- hexo generate
+
+#after_script:
+after_success:
+- cd public
+- git init
+- git config user.name "ybbxk"
+- git config user.email "ybbxk@travis.ci"
+- git add .
+- git commit -m "Update docs"
+- git push --force --quiet "https://${GH_TOKEN}@${GIT_PAGE_REF}" master:master
+#- git push --force --quiet "${GIT_SSH_PAGE_REF}" master:master
+#- git push --force --quiet "${GIT_SSH_CODING_NET}" master:master
+#- git push --force --quiet "${GIT_SSH_CODING_NET_KARLZHOU}" master:coding-pages
+#- curl -H 'Content-Type:text/plain' --data-binary @baidu_urls.txt "http://data.zz.baidu.com/urls?site=www.karlzhou.com&token=${baidu_submit_token}"
+
+
+branches:
+  only:
+  - master
+
+# configure notifications (email, IRC, campfire etc)
+# please update this section to your needs!
+# https://docs.travis-ci.com/user/notifications/
+notifications:
+  email:
+  - gq@guoqiang.info
+  on_success: change
+  on_failure: always
